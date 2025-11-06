@@ -1,6 +1,6 @@
 ---
-title: "Magíster en Administración de Instituciones de Salud "
-subtitle: "Modelos predictivos"
+title: "Curso Inversiones IA Generativa"
+subtitle: "Móodulo de IA generativa"
 date: last-modified
 lang: es
 format:
