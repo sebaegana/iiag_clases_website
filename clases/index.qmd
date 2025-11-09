@@ -1,7 +1,7 @@
 ---
 title: "Clases"
 listing:
-  contents: "*.qmd"
+  contents: "*.qmd"        # lista todas las clases .qmd del directorio
   sort: "listing_title"
   type: default
   fields: [listing_title]
@@ -9,21 +9,14 @@ listing:
 
 # Clases del curso
 
-A continuación se listan las clases creadas en formato Quarto (`.qmd`).  
-Debajo encontrarás también los **PDF adicionales** que se encuentran en la carpeta `pdf/`.
-
----
-
-## 📘 Clases en formato Quarto
-*(se generan automáticamente)*
-
-<!-- El bloque listing anterior muestra automáticamente las .qmd -->
+Primero verás el **material PDF** adicional.  
+Más abajo, las **clases en formato Quarto (.qmd)** se listan automáticamente.
 
 ---
 
 ## 📄 Material adicional en PDF
 
-```{r}
+```{r, results='asis'}
 # Carpeta donde están los PDF
 pdf_dir <- "clases_inversiones"
 
