@@ -3,7 +3,7 @@ project:
   output-dir: docs
 
 website:
-  title: "Curso Modelos predictivos"
+  title: "Curso Inversiones con IA Generativa"
   navbar:
     left:
       - text: "Inicio"

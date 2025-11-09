@@ -4,7 +4,38 @@ listing:
   contents: "*.qmd"
   sort: "listing_title"
   type: default
-  fields: [listing_title]    # ✅ Only show the title
+  fields: [listing_title]
 ---
 
 # Clases del curso
+
+A continuación se listan las clases creadas en formato Quarto (`.qmd`).  
+Debajo encontrarás también los **PDF adicionales** que se encuentran en la carpeta `pdf/`.
+
+---
+
+## 📘 Clases en formato Quarto
+*(se generan automáticamente)*
+
+<!-- El bloque listing anterior muestra automáticamente las .qmd -->
+
+---
+
+## 📄 Material adicional en PDF
+
+```{r}
+# Cargar PDFs desde la carpeta "pdf"
+pdf_dir <- "pdf"   # crea la carpeta "pdf/" en la raíz del proyecto
+if (!dir.exists(pdf_dir)) dir.create(pdf_dir, FALSE)
+
+pdf_files <- list.files(pdf_dir, pattern = "\\.pdf$", full.names = TRUE)
+
+if (length(pdf_files) == 0) {
+  cat("- *(No hay archivos PDF en la carpeta `pdf/`)*")
+} else {
+  rel <- file.path(pdf_dir, basename(pdf_files))
+  bullets <- paste0("- [", basename(rel), "](", rel, ")")
+  cat(paste(bullets, collapse = "\n"))
+}
+```
+
