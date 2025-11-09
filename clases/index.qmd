@@ -24,18 +24,23 @@ Debajo encontrarás también los **PDF adicionales** que se encuentran en la car
 ## 📄 Material adicional en PDF
 
 ```{r}
-# Cargar PDFs desde la carpeta "pdf"
-pdf_dir <- "pdf"   # crea la carpeta "pdf/" en la raíz del proyecto
-if (!dir.exists(pdf_dir)) dir.create(pdf_dir, FALSE)
+# Carpeta donde están los PDF
+pdf_dir <- "clases_inversiones"
 
-pdf_files <- list.files(pdf_dir, pattern = "\\.pdf$", full.names = TRUE)
-
-if (length(pdf_files) == 0) {
-  cat("- *(No hay archivos PDF en la carpeta `pdf/`)*")
+# Verificar si existe
+if (!dir.exists(pdf_dir)) {
+  cat("- *(No existe la carpeta `clases_inversiones/`)*")
 } else {
-  rel <- file.path(pdf_dir, basename(pdf_files))
-  bullets <- paste0("- [", basename(rel), "](", rel, ")")
-  cat(paste(bullets, collapse = "\n"))
+  # Buscar PDFs dentro de esa carpeta
+  pdf_files <- list.files(pdf_dir, pattern = "\\.pdf$", full.names = TRUE)
+  
+  if (length(pdf_files) == 0) {
+    cat("- *(No hay archivos PDF en la carpeta `clases_inversiones/`)*")
+  } else {
+    rel <- file.path(pdf_dir, basename(pdf_files))
+    bullets <- paste0("- [", basename(rel), "](", rel, ")")
+    cat(paste(bullets, collapse = "\n"))
+  }
 }
 ```
 
