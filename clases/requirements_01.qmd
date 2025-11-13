@@ -1,7 +1,7 @@
 ---
 listing_title: "Requerimientos 01"
 title: |
-  | \includegraphics[width=5cm]{Imagen1.jpg  
+  | \includegraphics[width=5cm]{Imagen1.jpg}
   | ECO5008 Modelos predictivos
 subtitle: Requirements 01 - Requerimientos iniciales e instalación de n8n
 format: pdf
