@@ -1,7 +1,7 @@
 ---
 listing_title: "Clase 01"
 title: |
-  | \includegraphics[width=5cm]{Imagen5.png}  
+  | \includegraphics[width=5cm]{Imagen1.jpg}  
   | ECO5008 Modelos predictivos
 subtitle: Requirements 01 - Requerimientos iniciales e instalación de n8n
 format: pdf
@@ -33,16 +33,17 @@ library(fontawesome)
 
 Esta guía explica cómo instalar y ejecutar **n8n**, una plataforma de automatización de flujos de trabajo (*workflow automation*), en **Windows** y **macOS**.
 
----
+------------------------------------------------------------------------
 
 ## Instalación en Windows
 
 ### Instalar Node.js LTS
+
 Descarga la versión **LTS** de [nodejs.org](https://nodejs.org) e instálala.
 
 Verifica la instalación, abriendo el terminal o Powershell con permisos de administrador:
 
-```powershell
+``` powershell
 node -v
 npm -v
 ```
@@ -51,7 +52,7 @@ npm -v
 
 Si aparece el error “running scripts is disabled”, ejecuta:
 
-```powershell
+``` powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
@@ -59,7 +60,7 @@ Cierra y vuelve a abrir PowerShell.
 
 ### Ejecutar n8n con npx
 
-```powershell
+``` powershell
 npx n8n
 # o
 npx --yes n8n@latest
@@ -73,19 +74,20 @@ Luego abre http://localhost:5678 en tu navegador.
 
 Si tienes Homebrew, instala Node.js:
 
-```powershell
+``` powershell
 brew install node
 ```
+
 Verifica la instalación:
 
-```powershell
+``` powershell
 node -v
 npm -v
 ```
 
 ### Ejecutar n8n con npx
 
-```powershell
+``` powershell
 npx --yes n8n@latest
 ```
 
@@ -95,7 +97,7 @@ Luego abre http://localhost:5678
 
 Se debe dejar en claro que se puede acceder a un free trial por 14 días; para después se debe pagar por la utilización.
 
-- Creación de cuenta: entrar a https://n8n.io y crearse una cuenta
+-   Creación de cuenta: entrar a https://n8n.io y crearse una cuenta
 
 ## Otras configuraciones
 
@@ -105,25 +107,23 @@ Estos dos pasos los veremos en su momento dentro del curso, pero es bueno que ya
 
 A continuación se muestran los pasos para poder conectar Google Sheets con n8n cuando se tiene la versión on premise (desde nuestro computador). En este punto, se debe tener en cuenta que Google Cloud puede pedir información de alguna tarjeta para poder crear proyectos y habilitar servicios con el fin de verificar identidad, evitar fraudes y permitir utilización de APIs.
 
-
 Como aclaración, desde el paso 7 es algo que debemos hacer para poder conectarnos con n8n.
 
-1. Primero debemos tener una cuenta de google
-2. Ir a la Consola de GCP
-3. Crear un nuevo proyecto
-4. Ir a "API and services", luego "Library"
-5. Buscamos "Google Sheets API" y la habilitamos
-6. Vamos a "OAuth consent screen", "First steps", creamos un nombre para la app (n8n drive en mi caso), ingresamos nuestro correo, seteamos en externo y luego de nuevo nuestro correo.
-7. Luego vamos a "OAuth client", en type ponemos Web app y seteamnos en la autorización para el URL desde n8n (http://localhost:5678/rest/oauth2-credential/callback)
-8 Antes de validar la conexión vamos a "Test group" y añadimos nuestro correo a los usuarios.
+1.  Primero debemos tener una cuenta de google
+2.  Ir a la Consola de GCP
+3.  Crear un nuevo proyecto
+4.  Ir a "API and services", luego "Library"
+5.  Buscamos "Google Sheets API" y la habilitamos
+6.  Vamos a "OAuth consent screen", "First steps", creamos un nombre para la app (n8n drive en mi caso), ingresamos nuestro correo, seteamos en externo y luego de nuevo nuestro correo.
+7.  Luego vamos a "OAuth client", en type ponemos Web app y seteamnos en la autorización para el URL desde n8n (http://localhost:5678/rest/oauth2-credential/callback) 8 Antes de validar la conexión vamos a "Test group" y añadimos nuestro correo a los usuarios.
 
 Por último, estos pasos no son necesario cuando tienes la versión web de n8n.
 
 ### Chatgpt Developer
 
-1. Debemos ir al siguiente enlace: platform.openai.com/playground
-2. En caso de no tener una cuenta la debemos crear
-3. Para poder utilizar de manera correcta los ejemplos, debemos cargar por lo menos un saldo de 1 dólar para poder conectarnos desde nuestras automatizaciones. Esto no es obligatorio, me pueden seguir sin pagar solo para ir entendiendo lo que se puede llegar a hacer. 
-4. Luego debermos realizar la generación de una APIkey para poder conectar con n8n
+1.  Debemos ir al siguiente enlace: platform.openai.com/playground
+2.  En caso de no tener una cuenta la debemos crear
+3.  Para poder utilizar de manera correcta los ejemplos, debemos cargar por lo menos un saldo de 1 dólar para poder conectarnos desde nuestras automatizaciones. Esto no es obligatorio, me pueden seguir sin pagar solo para ir entendiendo lo que se puede llegar a hacer.
+4.  Luego debermos realizar la generación de una APIkey para poder conectar con n8n
 
-Se deja claro que no existe ningún interés ni vínculo entre los docentes y algún LLM utilizado.  
+Se deja claro que no existe ningún interés ni vínculo entre los docentes y algún LLM utilizado.
