@@ -14,9 +14,9 @@ Más abajo, las **clases en formato Quarto (.qmd)** se listan automáticamente.
 
 ---
 
-## 📄 Material adicional en PDF
+## Clases Inversiones
 
-```{r, results='asis'}
+```{r, results='asis', echo=FALSE}
 # Carpeta donde están los PDF
 pdf_dir <- "clases_inversiones"
 
@@ -37,3 +37,4 @@ if (!dir.exists(pdf_dir)) {
 }
 ```
 
+## Clases IA generativa

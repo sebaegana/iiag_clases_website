@@ -3,7 +3,7 @@ listing_title: "Clase 01"
 title: |
   | \includegraphics[width=5cm]{Imagen5.png}  
   | ECO5008 Modelos predictivos
-subtitle: Clase 01 - Pronósticos y Simulación en la Gestión Hospitalaria
+subtitle: Clase 01 - Introducción a agentes y automatización con LLM's
 format: pdf
 editor: visual
 author:   
@@ -30,674 +30,336 @@ library(fontawesome)
 
 # Clase 01
 
-# Conceptos iniciales
+## Conceptos iniciales
 
-## Conceptos básicos de series de tiempo
+### Automatization, AI automation and AI agent
 
-Se habla de series de tiempo cuando nos referimos a una variable sobre la cual observamos su comportamiento a través del tiempo. Un ejemplo conocido, puede ser el principal indicador de productividad de un país, denominado Producto interno bruto (PIB). Veamos la siguiente imagen:
+- Automations (automatizaciones)
 
-![Obtenida desde: https://revistapaideia.cl/ciclos-economicos-que-son-tipos-y-fases](imagenes/Ejemplos-historicos-de-ciclos-economicos-1.png)
+Uso de tecnología para ejecutar tareas sin intervención humana. Siempre tienen un disparador (trigger) y una acción. 
 
-Pasemos ahora a hablar de ciertos componentes de las series de tiempo.
+Ejemplo: “Al enviar un formulario, guardar los datos en Airtable.”
 
-## Tendencia, ciclo, estacionalidad y ruido
+- AI automations (automatizaciones con IA)
 
--   Tendencia: corresponde al comportamiento general o a la dirección de largo plazo de la serie. Se debe tener cuidado que en algunas variables esto no siempre se cumple.
+Igual que lo anterior + un LLM como “cerebro” (ChatGPT, Claude, etc.) que transforma o decide sobre los datos (resumir, clasificar, analizar sentimiento). 
 
-Veamos el caso para el precio de la acción de LATAM Airlines `r fa("plane-departure", fill = "steelblue")`:
+Ejemplo: “Formulario → LLM hace análisis de sentimiento → guardar la etiqueta en Google Sheets.
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
-# install.packages(c("tidyquant", "scales"))  # si no los tienes
-library(tidyquant)
-library(tidyverse)
-library(scales)
+- AI agents (agentes de IA)
 
-ticker <- "LTM.SN"          # Alternativas que a veces se usan: "LTM", "LTMAQ" (histórico OTC)
-desde  <- "2018-01-01"
+Igual que la AI automation, pero el LLM además tiene herramientas (puede “llamar” APIs/servicios/sub-workflows). 
 
-# 1) Descargar precios diarios (OHLC); 'adjusted' incluye dividendos/splits
-precios <- tq_get(ticker, from = desde, to = Sys.Date())
+Ejemplo: Por Telegram le pides “resume mis 5 últimos correos” → el agente usa la herramienta Gmail → responde; o “agenda una reunión” → usa Calendar, etc.
 
-# 2) Último dato disponible
-ultimo <- precios |> dplyr::slice_tail(n = 1) |> dplyr::pull(adjusted)
+Pueden encadenar sub-agentes (arquitectura tipo “CEO y equipos”), cambiar de modelo, hablar con otros LLMs, navegar, usar Python, etc.
 
-# 3) Gráfico
-library(ggplot2)
-ggplot(precios, aes(date, adjusted)) +
-  geom_line(linewidth = 0.8) +
-  labs(
-    title = "LATAM Airlines Group",
-    subtitle = paste0("Último cierre: ",
-                      label_dollar(prefix = "$", big.mark = ".", decimal.mark = ",")(ultimo),
-                      " CLP (", max(precios$date), ")"),
-    x = "Fecha", y = "Precio ajustado (CLP)", caption = "Fuente: Yahoo Finance via tidyquant"
-  ) +
-  theme_minimal()
+En resumen:
 
-```
+\small
+| Concepto      | ¿Tiene LLM? | ¿Usa herramientas? | Ejemplo rápido                     |
+| ------------- | ----------- | ------------------ | ---------------------------------- |
+| Automation    | No          | No                 | Form → Airtable                    |
+| AI Automation | Sí          | No (solo LLM)      | Form → LLM (sentimiento) → Sheets  |
+| AI Agent      | Sí          | Sí (APIs/tools)    | Telegram → Agente → Gmail/Calendar |
+\normalsize
 
-Miremos ahora el caso en donde filtramos el período 2020 - 2021:
+### API (Application Programming Interface)
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+Una API (Application Programming Interface) es una forma estandarizada de comunicación entre programas. Permite que una aplicación “hable” con otra sin que el usuario intervenga directamente.
 
-ticker <- "LTM.SN"
-desde  <- "2020-01-01"
-hasta  <- "2021-12-31"
+En simple: es un puente que conecta sistemas distintos para intercambiar datos o ejecutar acciones.
 
-# 1) Descargar solo 2020–2022
-precios <- tq_get(ticker, from = desde, to = hasta)
+Ejemplos:
 
-# 2) Último precio del período
-ultimo <- precios %>% slice_tail(n = 1) %>% pull(adjusted)
+- Una web usa la API de Google Maps para mostrar un mapa.
+- n8n usa la API de Airtable para guardar datos automáticamente.
 
-# 3) Gráfico
-ggplot(precios, aes(date, adjusted)) +
-  geom_line(linewidth = 0.8) +
-  labs(
-    title = "LATAM Airlines Group",
-    subtitle = paste0("Último cierre en el rango: ",
-                      label_dollar(prefix = "$", big.mark = ".", decimal.mark = ",")(ultimo),
-                      " CLP (", max(precios$date), ")"),
-    x = "Fecha", y = "Precio ajustado (CLP)",
-    caption = "Fuente: Yahoo Finance vía tidyquant"
-  ) +
-  scale_x_date(date_breaks = "3 months", date_labels = "%Y-%m") +
-  theme_minimal()
+Estructura básica:
 
-```
+- Request (solicitud): se envía información (por ejemplo, “guarda este registro”).
+- Response (respuesta): la API devuelve un resultado (“registro guardado con éxito”).
 
-¿Qué pasa si filtramos desde el 2024 a la fecha?
+### Qué es la API de OpenAI
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+La API de OpenAI permite conectar tus aplicaciones o automatizaciones con modelos como GPT-4, GPT-4-mini o GPT-4-Omni, usando una clave (API key). El cobro se realiza por cantidad de tokens procesados (entrada y salida de texto).
 
-ticker <- "LTM.SN"
-desde  <- "2024-01-01"
-hasta  <- "2025-09-26"
+- Cómo acceder
 
-# 1) Descargar solo 2020–2022
-precios <- tq_get(ticker, from = desde, to = hasta)
+  - Entra a OpenAI Playground: https://platform.openai.com/
+  - Inicia sesión o crea una cuenta.
+  - En el panel superior derecho abre tu perfil → Billing → agrega una tarjeta de crédito.
+    - Puedes empezar con un crédito de prueba (~USD 5).
+  - Crea un proyecto → API keys → Create new secret key.
+    - Esa clave te permite conectar OpenAI con n8n, Python, u otras apps.
+    - Guárdala en un lugar seguro (no se vuelve a mostrar).
+    - Puedes revocarla o rotarla cuando quieras.
 
-# 2) Último precio del período
-ultimo <- precios %>% slice_tail(n = 1) %>% pull(adjusted)
+- Costos paorximados
 
-# 3) Gráfico
-ggplot(precios, aes(date, adjusted)) +
-  geom_line(linewidth = 0.8) +
-  labs(
-    title = "LATAM Airlines Group",
-    subtitle = paste0("Último cierre en el rango: ",
-                      label_dollar(prefix = "$", big.mark = ".", decimal.mark = ",")(ultimo),
-                      " CLP (", max(precios$date), ")"),
-    x = "Fecha", y = "Precio ajustado (CLP)",
-    caption = "Fuente: Yahoo Finance vía tidyquant"
-  ) +
-  scale_x_date(date_breaks = "3 months", date_labels = "%Y-%m") +
-  theme_minimal()
-```
+| Modelo           | Entrada        | Salida    | Comentario                             |
+| ---------------- | -------------- | --------- | -------------------------------------- |
+| **GPT-4 mini**   | $0.15 USD      | $0.60 USD | Recomendado: barato y rápido           |
+| **GPT-4 Omni**   | $2.50 USD      | $10 USD   | Más preciso y versátil                 |
+| **o3-mini**      | $1.10 USD      | $4.40 USD | Buen equilibrio para código o análisis |
+| **GPT-4.5 / o1** | Mucho más caro | —         | No recomendado para agentes            |
 
-Por esta razón debemos tener cuidado con apresurarnos a tomar conclusiones sobre una serie solo en base a la tendencia.
+1 millón de tokens ≈ 750 000 palabras, por lo tanto los costos reales suelen ser de pocos dólares.
 
--   Ciclo: corresponde a la variación propia de la serie en torno a la tendencia que no responde a frecuencias predecibles o fijas.
 
--   Estacionalidad: corresponde a variaciones de la serie que poseen un comportamiento predecible ya sea semanal, menusal o anual.
+- Qué se puede hacer
 
--   Ruido: corresponde al componente aleatorio e irregular que no puede ser explicado a través de los otros componentes que generalmente se relaciona con variaciones erráticas e impredecibles que no siguen un patrón.
+  - Probar modelos en el Playground ajustando:
+    - Modelo (GPT-4 mini, o3-mini, etc.)
+    - Temperature (precisión vs creatividad)
+    - Máx tokens
+    - System message (“You are a helpful assistant…”)
+  - Crear proyectos separados y compartirlos con otros usuarios.
+  - Definir límites de gasto (por ejemplo, alerta a $10 o tope de $40 mensuales).
+  - Revisar consumo diario en la pestaña Usage.
 
-## ¿Por qué analizamos una serie de tiempo?
+### Qué es el Function Calling
 
-Se debe justificar el por qué esto es necesario en el contexto de negocios. Por lo general, el interés científico sobre una serie puede darse por dos razones:
+El Function Calling (llamado a funciones) permite que un modelo de lenguaje (LLM) use otras herramientas o programas externos para realizar tareas que por sí solo no puede hacer bien.
 
-1.  Explicar (por qué)
-2.  Predecir (qué y cuánto)
+Idea principal: "Un LLM se comporta como un sistema operativo". Esto quiere decir que:
 
-A pesar de esto, el límite entre ambas dinámicas es muy delgado. Veamos el siguiente ejemplo:
+  - Tiene memoria temporal (su context window, como la RAM).
+  - Es muy bueno con texto, pero no con tareas específicas (por ejemplo, cálculos o imágenes).
+  - Gracias al function calling, puede “pedir ayuda” a otros programas especializados.
 
-\begin{equation}
-\ln w_i \;=\; \beta_0 \;+\; \rho\, S_i \;+\; \beta_1 X_i \;+\; \beta_2 X_i^{2} \;+\; \boldsymbol{\gamma}^{\top} Z_i \;+\; \varepsilon_i
-\end{equation}
+- Ejemplos
 
--   $w_i$: salario (normalmente por hora, en términos reales).
--   $S_i$: años de escolaridad
--   $X_i$: experiencia potencial (se utiliza también un coeficiente al cuadrado)
--   $Z_i$: puede incluir variables de género, región, etc.
-
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
-
-# Parámetros "Mincer" (ejemplo)
-beta0 <- 2.0           # intercepto
-rho   <- 0.08          # retorno a la educación (no afecta la concavidad si S es fijo)
-beta1 <- 0.08          # coef. experiencia > 0
-beta2 <- -0.0015       # coef. experiencia^2 < 0  -> concavidad
-S     <- 12            # años de escolaridad (fijo solo para desplazar el nivel)
-
-# Rango de experiencia (0 a 45 años)
-X <- seq(0, 45, by = 0.25)
-
-# log-salario y salario (opcional) según Mincer
-ln_w <- beta0 + rho*S + beta1*X + beta2*X^2
-w    <- exp(ln_w)
-
-# Vértice (máximo de ln(w))
-x_star <- -beta1/(2*beta2)
-y_star <- beta0 + rho*S + beta1*x_star + beta2*x_star^2
-
-df <- data.frame(X, ln_w, w)
-
-# Gráfico principal: concavidad en log-salario
-p <- ggplot(df, aes(X, ln_w)) +
-  geom_line(linewidth = 1) +
-  geom_vline(xintercept = x_star, linetype = 2, linewidth = 0.6) +
-  labs(
-    title = "Curva minceriana: concavidad en log(salario)",
-    x = "Experiencia potencial (años)",
-    y = "log(salario)"
-  ) +
-  theme_minimal(base_size = 12)
-
-p
-```
-
-Por lo general este modelo se utiliza para poder explicar factores que influyen dentro de la renta de las personas.
-
-Pero ¿qué pasa si en vez de explicar la variable, asumimos que el modelo puede también predecir la variable de interés? `r fa("arrow-up-right-dots", fill = "steelblue")`
-
--   Pensemos en el comportamiento tradicional que se hace entorno a los promedios de una varriable.
-
-## Predecir, pronosticar y simular
-
-Por lo general predecir se relaciona con contextos más generales que solo estimar el valor futuro de una serie temporal. Se puede referir a estimar el valor de una variable desconocida en distintos contexto temporales, como también estar asociado a variables no temporales (clasificación).
-
-Para el caso de pronosticar, esto conecta por lo general con estimar el valor futuro de una variable (serie de tiempo). En este sentido pronóstico refiere a un contexto más acotado dentro de la dinámica predictiva. **En este sentido, todo pronóstico es una predicción, pero no toda predicción es un pronóstico**.
-
-Una simulación refiere a la generación de múltiples valores futuros posibles a partir de supuestos probabilísticos para medir distribuciones, percentiles, etc.; con esto poder también determinar riesgo relacionado con los valores futuros.
-
-# Algunas técnicas de pronóstico:
-
-Promedio móvil: suaviza datos, útil para detectar tendencia general.
-
-\begin{equation}
-\hat{y}_{t+1} \;=\; \frac{1}{k}\sum_{i=0}^{k-1} y_{t-i}
-\end{equation}
-
-Suavizamiento exponencial simple: otorga más peso a datos recientes, capta mejor los cambios recientes
-
-\begin{equation}
-\hat{y}_{t+1} \;=\; \alpha\, y_t \;+\; (1-\alpha)\,\hat{y}_t,
-\qquad 0<\alpha<1
-\end{equation}
-
-## Ejemplos numéricos
-
-Datos $y_t$: 100, 104, 110, 120, 115, 118, 130, 128, 135, 140
-
-### Promedio
-
-Pensemos en la situación de negocios más simple. Cálculamos el promedio y esto se convierte en nuestro pronóstico:
-
-$$
-\hat{y}_{t+1}=120
-$$
-
-### Promedio móvil (k = 3)
-
-$$
-\hat{y}_{t+1}=\frac{1}{3}(y_t+y_{t-1}+y_{t-2})
-$$
-
-\begin{itemize}
-\item $\hat y_{4}=\frac{110+104+100}{3}=104.67$
-\item $\hat y_{5}=\frac{120+110+104}{3}=111.33$
-\item $\hat y_{6}=\frac{115+120+110}{3}=115.00$
-\end{itemize}
-
-Pronóstico $t=11$: $$\hat y_{11}=\frac{140+135+128}{3}=\mathbf{134.33}$$
-
-### Suavizamiento Exponencial Simple ($\alpha=0.3$)
-
-$$
-s_{t}=\alpha\,y_t+(1-\alpha)\,s_{t-1},\quad s_1=y_1
-$$
-
-\begin{itemize}
-\item $s_1=100$
-\item $s_2=0.3\cdot 104+0.7\cdot 100=101.20$
-\item $s_3=0.3\cdot 110+0.7\cdot 101.20=103.84$
-\item $s_4=0.3\cdot 120+0.7\cdot 103.84=108.688$
-\end{itemize}
-
-Pronóstico $t=11$: $$s_{10}=\mathbf{129.628}$$
-
-# Actividad aplicada
-
-Somos un equipo de analista y debemos que estimar una "buena manera" de poder saber cuántas atenciones tendrémos en el futuro por causas respiratorias. Utilizaremos el siguiente dataset del Gobierno de Chile:
-
--   [Atenciones de urgencias de causas respiratorias por semana epidemiológica](https://datos.gob.cl/dataset/atenciones-de-urgencia-causas-respiratorias)
-
-## EDA (exploratorio)
-
-Corresponde a **Exploratory Data Analysis**, lo que implica generar una primera impresión general de los datos.
-
-Para esto podemos aplicar la siguiente librería **DataExplorer** [más info acá](https://github.com/boxuancui/DataExplorer), considerando siempre primero importar el archivo.
-
-```{r message=FALSE, warning=FALSE}
-
-library(readr)
-library(tidyverse)
-library(DataExplorer)
-library(kableExtra)
-library(knitr)
-library(arrow)
-
-
-#dataset_converted <- read_csv("data/dataset_converted.csv")
-df <- read_parquet("data/at_urg_respiratorio_semanal.parquet")  
-
-df_filtered <- df %>% 
-  filter(Causa == "TOTAL CAUSAS SISTEMA RESPIRATORIO")
-
-intro_table <- introduce(df_filtered)
-
-intro_table %>%
-  select(rows, columns, discrete_columns, continuous_columns,
-         all_missing_columns, total_missing_values) %>% 
-  kable(
-    format = "latex",
-    booktabs = TRUE,
-    caption = "Dataset summary from DataExplorer"
-  ) %>%
-  kable_styling(
-    font_size = 5,
-    latex_options = c("hold_position", "striped")
-  )
-
-
-```
-
-El análisis más detallado se puede obtener con el siguiente código:
-
-```{r message=FALSE, warning=FALSE}
-#| eval: false
-#| include: true
-#| 
-create_report(df_filtered)
-```
-
-Con esto podemos darnos una primera impresión de los datos que contiene el archivo descargado, como también algunas carácteristicas de cada variable.
-
-No centraremos en el total de atenciones para un centro de atención en particular; para esto generamos los siguientes filtro:
-
-```{r message=FALSE, warning=FALSE}
-#| eval: true
-#| include: true
-
-
-sotero_01 <- 
-  df_filtered %>% 
-  filter(RegionCodigo == 13 
-                       & ServicioSaludCodigo == 14 
-                       & ComunaCodigo == 13201
-                       & EstablecimientoGlosa == "Complejo Hospitalario Dr. Sótero del Río (Santiago, Puente Alto)") %>%
-  select(EstablecimientoGlosa, Anio, NumTotal, Causa) %>% 
-  filter(Causa == "TOTAL CAUSAS SISTEMA RESPIRATORIO") %>% 
-  group_by(EstablecimientoGlosa, Anio) %>%  
-  summarise(total_casos = sum(NumTotal))
-
-sotero_01 %>%
-  kable(
-    format = "latex",
-    booktabs = TRUE,
-    caption = "Atenciones por año"
-  ) %>%
-  kable_styling(
-    font_size = 5,
-    latex_options = c("hold_position", "striped")
-  )
-
-```
-
-```{r message=FALSE, warning=FALSE}
-#| eval: true
-#| include: true
-
-graph_01 <- 
-  ggplot(sotero_01) + 
-  geom_line(aes(Anio, total_casos))
-
-graph_01
-```
-
-```{r message=FALSE, warning=FALSE}
-#| eval: true
-#| include: true
-#| echo: false
-
-# === Parámetros de pronóstico ===
-k      <- 3      # ventana del promedio móvil
-alpha  <- 0.30   # suavizamiento exponencial (0<alpha<1)
-
-# === 1) Normalizar nombres y ordenar ===
-df <- sotero_01 %>%
-  rename(
-    Anio       = dplyr::matches("(?i)^(anio|year)$"),
-    Atenciones = dplyr::matches("(?i)^(total_casos|atenciones|valor|count)$")
-  ) %>%
-  arrange(Anio) %>% 
-  filter(Anio != 2025) %>% 
-  ungroup()
-
-y <- df$Atenciones
-
-# Chequeo mínimo
-stopifnot(length(y) >= k, alpha > 0, alpha < 1)
-
-# === 2) Pronóstico por Promedio Móvil (PM) ===
-pm_forecast <- mean(tail(y, k))  # \hat{y}_{T+1} = promedio de los últimos k
-
-# === 3) Pronóstico por Suavizamiento Exponencial Simple (SES) ===
-# s_t = alpha*y_t + (1-alpha)*s_{t-1}; pronóstico \hat{y}_{T+1} = s_T
-s <- y[1]
-for (i in 2:length(y)) {
-  s <- alpha*y[i] + (1 - alpha) * s
+  - El LLM llama a una calculadora → resuelve operaciones matemáticas.
+  - Llama a un modelo de difusión → genera imágenes o audio.
+  - Llama al navegador → busca información reciente.
+  - Llama a Gmail o Calendar → envía correos o crea eventos (como hacen los agentes de IA).
+
+- Cómo funciona
+
+El function calling se implementa mediante API requests: el LLM envía una instrucción a otra aplicación, recibe el resultado y lo integra en su respuesta.
+Modelos como GPT-4, o3-mini o Llama 3 ya traen esta capacidad incorporada.
+
+- Relación con los Agentes de IA
+
+  - Un AI Agent usa function calling para comunicarse con sus herramientas (correo, calendario, búsqueda web, etc.).
+  
+  - Puede combinar varios LLMs que actúan como “departamentos” (CEO, CTO, CFO…), cada uno con funciones especializadas.
+
+Veamos un ejemplo simple:
+
+1. Ve a OpenAI Playground: https://platform.openai.com/playground?mode=chat
+2. En el menú derecho, activa la pestaña “Functions”.
+3. Añade una función con este JSON:
+
+\newpage
+
+```json
+{
+  "name": "calculator",
+  "description": "Performs arithmetic operations",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "a": {"type": "number"},
+      "b": {"type": "number"},
+      "operation": {
+        "type": "string",
+        "enum": ["sum", "subtract", "multiply", "divide"]
+      }
+    },
+    "required": ["a", "b", "operation"]
+  }
 }
-ses_forecast <- s
-
-# === 4) Construir tabla final (agrega fila del año siguiente con pronósticos) ===
-next_year <- max(df$Anio) + 1
-
-tabla_forecasts <- df %>%
-  add_row(Anio = next_year, Atenciones = NA_real_) %>%
-  mutate(
-    `PM(k)`        = c(rep(NA_real_, n() - 1), pm_forecast),
-    `SES(alpha)`   = c(rep(NA_real_, n() - 1), ses_forecast)
-  )
-
-tabla_forecasts %>%
-  kable(
-    format  = "latex",
-    booktabs = TRUE,
-    caption = sprintf(
-      "Atenciones por año con pronósticos: PM (k=%d) y SES (\\alpha=%.2f) para %d",
-      k, alpha, next_year
-    )
-  ) %>%
-  kable_styling(
-    font_size = 8,
-    latex_options = c("hold_position", "striped")
-  )
 ```
 
-Con esta simple metodología podemos plantear un pronóstico para lo que queda del año 2025.
+Otro ejemplo: 
 
-## Pregunta
-
-1.  ¿Que conclusión puede sacar el promedio móvil? ¿Del suavizamiento?
-2.  ¿Cómo evaluaría el pronóstico generado?
-
-# Simulaciones de Monte Carlo
-
-Una simulación corresponde a imitar en un entorno controlado para experimentar posibles comportamientos futuros de un sistema particular. En este caso lo que se simula es el valor futuro de la serie de tiempo que estamos intentando predecir.
-
-El concepto de **Monte Carlo** corresponde al muestreo aleatorio repetido de múltiples valores futuro para poder incorporar incertidumbre dentro de nuestras predicciones.
-
-En base a la serie ya analizada, definimos una simulación de montecarlo en base a lo siguiente:
-
-1.  Pronóstico base: calculas un número para el próximo año con dos métodos simples.
-
-2.  Error histórico: miras cómo se equivocaron esos métodos en el pasado (residuales = dato real − pronóstico de 1 paso). Esa lista de errores es tu “bolsa” de incertidumbre.
-
-3.  Simular futuros: repites miles de veces: sacas al azar un error de la bolsa (con reemplazo), se lo sumas al pronóstico base ⇒ obtienes un posible futuro.
-
-4.  Resultado: miles de posibles valores futuros (una distribución).
-
-```{r message=FALSE, warning=FALSE}
-#| eval: true
-#| include: true
-#| echo: false
-
-set.seed(123)
-
-# =========================
-# Parámetros del ejercicio
-# =========================
-k      <- 3         # ventana Promedio Móvil
-alpha  <- 0.30      # SES
-B      <- 10000     # simulaciones
-capacidad_max <- NA_real_   # pon un número si quieres calcular prob. (p.ej., 20000)
-
-# ==============
-# Preparar datos
-# ==============
-df <- sotero_01 %>%
-  rename(
-    Anio       = Anio,
-    Atenciones = total_casos
-  ) %>%
-  filter(Anio != 2025) %>%
-  arrange(Anio)
-
-
-stopifnot(nrow(df) >= k + 2)
-
-y <- df$Atenciones
-Tobs <- length(y)
-anio_sig <- max(df$Anio) + 1
-
-# ===========================
-# 1) Promedio Móvil (PM, k)
-# ===========================
-# Pronóstico puntual:
-pm_hat_T1 <- mean(tail(y, k))
-
-# Fitted one-step-ahead para residuales (a partir de t=k):
-pm_fitted <- sapply(k:Tobs, function(t) mean(y[(t-k+1):t]))
-pm_resid  <- y[k:Tobs] - pm_fitted
-
-# Distribución de error por bootstrap de residuales:
-pm_err_boot <- sample(pm_resid, size = B, replace = TRUE)
-pm_sim_T1   <- pmax(0, pm_hat_T1 + pm_err_boot)  # truncar a 0 si aplica
-
-# ===============================
-# 2) Suavizamiento Exponencial
-# ===============================
-# Suavizado y fitted:
-s <- y[1]
-ses_fitted <- rep(NA_real_, Tobs)
-ses_fitted[1] <- s
-for (t in 2:Tobs) {
-  s <- alpha * y[t] + (1 - alpha) * s
-  ses_fitted[t] <- s
+```json
+{
+  "name": "sentiment_classifier",
+  "description": "Clasifica el sentimiento de un texto corto.",
+  "strict": false,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "description": "Texto a analizar."
+      },
+      "language": {
+        "type": "string",
+        "description": "Idioma del texto (por ejemplo: 'es', 'en').",
+        "enum": [
+          "es",
+          "en"
+        ]
+      }
+    },
+    "required": [
+      "text"
+    ]
+  }
 }
-ses_hat_T1 <- ses_fitted[Tobs]           # pronóstico
-ses_resid  <- y[-1] - ses_fitted[-Tobs]  # residuales 1-step (del 2 al T)
+```
 
-# Bootstrap de residuales:
-ses_err_boot <- sample(ses_resid, size = B, replace = TRUE)
-ses_sim_T1   <- pmax(0, ses_hat_T1 + ses_err_boot)
+4. En el prompt escribe: “What is 25 multiplied by 4?”
 
-# =========================
-# 3) Resúmenes de simulación
-# =========================
-qfun <- function(x) {
-  qs <- quantile(x, c(0.05, 0.95), names = FALSE, na.rm = TRUE)
-  tibble::tibble(
-    Mediana = median(x, na.rm = TRUE),
-    P5     = qs[1],
-    P95    = qs[2]
-  )
-}
+### Cómo dar conocimiento adicional a un LLM
 
-pm_summ  <- qfun(pm_sim_T1)
-ses_summ <- qfun(ses_sim_T1)
+Para que un modelo (como ChatGPT o un agente de IA) use conocimiento externo, existen dos métodos principales:
 
-prob_cap_pm  <- if (is.na(capacidad_max)) NA_real_ else mean(pm_sim_T1  >= capacidad_max)
-prob_cap_ses <- if (is.na(capacidad_max)) NA_real_ else mean(ses_sim_T1 >= capacidad_max)
+1. In-context learning: agregar contexto directamente en el prompt (limitado por la ventana de contexto).
+2. Direct technology / RAG (Retrieval-Augmented Generation): almacenar la información en una base de datos vectorial que el modelo consulta solo cuando la necesita.
 
-tabla_mc <- tibble::tibble(
-  Metodo                 = c(sprintf("PM (k=%d)", k), sprintf("SES (α=%.2f)", alpha)),
-  `Pronóstico puntual`   = c(pm_hat_T1, ses_hat_T1),
-  `Mediana MC`           = c(pm_summ["Mediana"], ses_summ["Mediana"]),
-  `P5 MC`                = c(pm_summ["P5"], ses_summ["P5"]),
-  `P95 MC`               = c(pm_summ["P95"], ses_summ["P95"]),
-  `Prob ≥ capacidad`     = c(prob_cap_pm, prob_cap_ses)
+#### Qué es “Direct Technology” o RAG
+
+Es una técnica que permite a un LLM buscar información externa sin saturar su memoria.
+
+Funciona así:
+
+1. Subes tu conocimiento (PDF, texto, Markdown, etc.).
+2. Un modelo de embeddings convierte cada fragmento de texto en un conjunto de números (vectores) que representan su significado.
+3. Esos vectores se guardan en una base de datos vectorial (como Pinecone, Chroma o FAISS).
+4. Cuando haces una pregunta, el modelo busca solo los fragmentos más relevantes dentro del espacio vectorial.
+5. El LLM combina esa información con su propio razonamiento para responder.
+
+#### Qué son los embeddings y la base vectorial
+
+  - Embeddings: transforman texto en vectores numéricos (por ejemplo [0.12, 0.85, -0.44]).
+  - Palabras o frases con significados similares quedan cercanas entre sí en este espacio tridimensional.
+  
+  Ejemplo: “apple” y “banana” estarán cerca; “cat” y “dog” también.
+  
+  - Vector database: almacena estos vectores y permite hacer búsquedas por similitud semántica (no exactitud textual).
+
+- Por qué es útil
+
+  - Permite subir múltiples documentos sin limitar la ventana de tokens.
+  - Se puede usar con cualquier LLM, incluso modelos open-source.
+  - Es más rápido y barato que un fine-tuning.
+  - Ideal para agentes de IA especializados (por ejemplo, un agente que consulta tus PDFs técnicos antes de responder).
+
+#### Ejemplo de aplicación con agentes
+
+Imagina una organización de agentes:
+
+- El CEO (LLM principal) coordina las tareas.
+- Un agente de conocimiento tiene tu base vectorial (PDFs de fitness, finanzas, o bienes raíces).
+- Otro agente redacta artículos o informes.
+- Otro publica o guarda resultados.
+
+El flujo sería:
+
+1. El CEO pide un artículo sobre fitness.
+2. El primer agente busca datos en su vector database.
+3. El segundo escribe el texto con esa información.
+4. El tercero lo publica o guarda localmente.
+
+### Sobre los embeddings
+
+#### Entrenamiento previo de los embeddings
+
+Los embeddings que usamos (por ejemplo, con OpenAI o modelos open source) no se crean desde cero cada vez que los aplicamos.
+En realidad, provienen de un proceso de entrenamiento previo (pre-training) realizado sobre enormes cantidades de texto.
+
+#### ¿Qué aprende el modelo?
+
+Durante el entrenamiento, el modelo analiza millones o miles de millones de frases y aprende relaciones estadísticas entre palabras.
+El objetivo es que, al ver una secuencia de texto, el modelo pueda predecir la siguiente palabra o reconocer palabras que encajan en el mismo contexto.
+
+\small
+
+| Texto de entrenamiento               | Tarea implícita                                          | Lo que aprende                                                            |
+| ------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------- |
+| “El **perro** ladra en el jardín.”   | Predecir “perro” a partir de su contexto (“El … ladra…”) | Que “perro” aparece en contextos parecidos a “gato”, “animal”, “mascota”. |
+| “El **avión** aterriza en la pista.” | Predecir “avión”                                         | Que “avión” se asocia a “vuelo”, “piloto”, “aeropuerto”.                  |
+\normalsize
+
+Así, el modelo descubre automáticamente los significados y las similitudes semánticas sin reglas escritas por humanos.
+
+#### ¿Qué produce este aprendizaje?
+
+El modelo transforma cada palabra (o token) en un vector numérico que resume su significado aprendido. Estos vectores viven en un espacio de alta dimensión (por ejemplo, 768 o 1536 dimensiones). En ese espacio, las palabras que comparten contexto quedan cerca entre sí, y las que no tienen relación quedan lejos.
+
+Ejemplo esquemático (espacio 2D simplificado):
+
+Imaginemos que tenemos solo dos dimensiones (en realidad hay miles). Cada palabra se convierte en un punto:
+
+| Palabra | Eje X (animalidad) | Eje Y (domesticidad) |
+| ------- | ------------------ | -------------------- |
+| gato    | 0.9                | 0.95                 |
+| perro   | 0.85               | 0.97                 |
+| lobo    | 0.88               | 0.30                 |
+| avión   | 0.10               | 0.05                 |
+
+En el gráfico:
+
+- gato y perro están muy cerca, porque comparten significado.
+- lobo está un poco más lejos: sigue siendo animal, pero no doméstico.
+- avión está totalmente fuera del grupo
+
+#### Un ejemplo en python:
+
+Instalación de librerías:
+
+```python
+pip install openai numpy faiss-cpu
+```
+
+Generación de embeds
+
+```python
+from openai import OpenAI
+import numpy as np
+import faiss  # base de datos vectorial
+client = OpenAI()
+
+# Textos a convertir en embeddings
+sentences = [
+    "The dog is barking.",
+    "A cat is sleeping on the couch.",
+    "A car is driving down the street.",
+    "I love my pet animal."
+]
+
+# Crear embeddings usando el modelo de OpenAI
+response = client.embeddings.create(
+    model="text-embedding-3-small",
+    input=sentences
 )
 
-# =========================
-# 4) Tabla para PDF (LaTeX)
-# =========================
-
-tabla_mc %>%
-  kable(
-    format  = "latex",
-    booktabs = TRUE,
-    digits = 1,
-    caption = sprintf(
-      "Pronóstico para %d con intervalos Monte Carlo (B=%d). %s",
-      anio_sig, B,
-      if (is.na(capacidad_max)) "" else sprintf("Capacidad = %.0f", capacidad_max)
-    )
-  ) %>%
-  kable_styling(
-    font_size = 9,
-    latex_options = c("hold_position", "striped")
-  )
+# Extraer los vectores
+vectors = np.array([data.embedding for data in response.data])
+print("Dimensión de los embeddings:", vectors.shape)
 ```
 
-En términos de distribuciones:
+Salida esperada:
 
-```{r}
-#| label: fig-sim-dists
-#| fig-cap: "Distribuciones predictivas (bootstrap) para PM y SES: mediana (línea sólida) y P5/P95 (líneas punteadas)."
-#| fig-width: 7
-#| fig-height: 4
-#| fig-pos: 'H'
-#| echo: false
-
-stopifnot(exists("pm_sim_T1"), exists("ses_sim_T1"))
-
-sims <- tibble(
-  value  = c(pm_sim_T1, ses_sim_T1),
-  method = factor(c(
-    rep(sprintf("PM (k=%s)", if (exists("k")) k else "?"),   length(pm_sim_T1)),
-    rep(sprintf("SES (α=%s)", if (exists("alpha")) alpha else "?"), length(ses_sim_T1))
-  ))
-)
-
-sumstats <- sims %>%
-  group_by(method) %>%
-  summarise(
-    median = median(value, na.rm = TRUE),
-    p5     = quantile(value, 0.05, na.rm = TRUE, names = FALSE),
-    p95    = quantile(value, 0.95, na.rm = TRUE, names = FALSE),
-    .groups = "drop"
-  )
-
-ggplot(sims, aes(x = value, fill = method, color = method)) +
-  geom_density(alpha = 0.25, adjust = 1) +
-  geom_vline(data = sumstats, aes(xintercept = median, color = method), linewidth = 0.4) +
-  geom_vline(data = sumstats, aes(xintercept = p5,     color = method), linetype = "dashed", linewidth = 0.3) +
-  geom_vline(data = sumstats, aes(xintercept = p95,    color = method), linetype = "dashed", linewidth = 0.3) +
-  (if (exists("capacidad_max") && !is.na(capacidad_max))
-      geom_vline(xintercept = capacidad_max, linetype = "dotdash", linewidth = 0.4) else NULL) +
-  labs(
-    x = expression(Y[T+1]~"(simulado)"),
-    y = "Densidad",
-    title = "Distribuciones predictivas por bootstrap",
-    subtitle = sprintf("B ≈ %s simulaciones por método", format(length(pm_sim_T1), big.mark = ","))
-  ) +
-  theme_minimal(base_size = 11)
+```yaml
+Dimensión de los embeddings: (4, 1536)
 ```
 
-```{r}
-#| label: fig-ts-futuro
-#| fig-cap: "Serie anual con distribución del pronóstico en T+1 (PM y SES)."
-#| fig-width: 7
-#| fig-height: 4
-#| fig-pos: 'H'
-#| echo: false
+```python
+# Crear un índice FAISS
+index = faiss.IndexFlatL2(vectors.shape[1])
+index.add(vectors)
 
-# --- Datos base: asume sotero_01 con año y atenciones ---
-df <- sotero_01 %>%
-  rename(
-    Anio       = Anio,
-    Atenciones = total_casos
-  ) %>%
-  filter(Anio != 2025) %>% 
-  arrange(Anio)
+# Consultar algo nuevo
+query = "My puppy is barking loudly."
+query_vec = client.embeddings.create(
+    model="text-embedding-3-small",
+    input=query
+).data[0].embedding
 
-k     <- if (exists("k")) k else 3
-alpha <- if (exists("alpha")) alpha else 0.30
-B     <- if (exists("B")) B else 10000
-
-y <- df$Atenciones
-Tobs <- length(y)
-next_year <- max(df$Anio) + 1
-
-# --- Si no existen simulaciones, calcúlalas (bootstrap de residuales) ---
-if (!exists("pm_sim_T1") || !exists("ses_sim_T1")) {
-  # PM (k)
-  pm_hat    <- mean(tail(y, k))
-  pm_fitted <- sapply(k:Tobs, function(t) mean(y[(t-k+1):t]))
-  pm_resid  <- y[k:Tobs] - pm_fitted
-  pm_sim_T1 <- pmax(0, pm_hat + sample(pm_resid, B, replace = TRUE))
-
-  # SES (α)
-  s <- y[1]; ses_fitted <- numeric(Tobs); ses_fitted[1] <- s
-  for (t in 2:Tobs) { s <- alpha*y[t] + (1-alpha)*s; ses_fitted[t] <- s }
-  ses_hat    <- ses_fitted[Tobs]
-  ses_resid  <- y[-1] - ses_fitted[-Tobs]
-  ses_sim_T1 <- pmax(0, ses_hat + sample(ses_resid, B, replace = TRUE))
-}
-
-# --- Data frames para gráfica ---
-sims <- tibble(
-  value  = c(pm_sim_T1, ses_sim_T1),
-  method = factor(rep(c(sprintf("PM (k=%d)", k), sprintf("SES (α=%.2f)", alpha)),
-                      c(length(pm_sim_T1), length(ses_sim_T1))))
-)
-
-sumstats <- sims %>%
-  group_by(method) %>%
-  summarise(
-    med = median(value),
-    p5  = quantile(value, 0.05, names = FALSE),
-    p95 = quantile(value, 0.95, names = FALSE),
-    .groups = "drop"
-  ) %>%
-  # separar ligeramente PM y SES en el eje x para que no se monten
-  mutate(x = next_year + if_else(method == levels(method)[1], -0.15, 0.15))
-
-sims_plot <- sims %>%
-  mutate(x = next_year + if_else(method == levels(method)[1], -0.15, 0.15))
-
-# --- Plot: serie histórica + distribución futura ---
-ggplot() +
-  geom_line(data = df, aes(Anio, Atenciones)) +
-  geom_point(data = df, aes(Anio, Atenciones), size = 1.3) +
-  # distribución en T+1: violín
-  geom_violin(data = sims_plot, aes(x, value, fill = method),
-              width = 0.25, alpha = 0.30, color = NA) +
-  # intervalo P5–P95 y mediana
-  geom_linerange(data = sumstats, aes(x, ymin = p5, ymax = p95, color = method),
-                 linewidth = 0.6) +
-  geom_point(data = sumstats, aes(x, y = med, color = method), size = 2) +
-  scale_x_continuous(breaks = c(df$Anio, next_year),
-                     labels = c(df$Anio, paste0(next_year, " (T+1)")),
-                     guide  = guide_axis(angle = 45)) +
-  labs(
-    x = "Año", y = "Atenciones",
-    fill = "Método", color = "Método",
-    title = "Serie de tiempo con distribución del pronóstico",
-    subtitle = "Barra: P5–P95"
-  ) +
-  theme_minimal(base_size = 11)
+# Buscar el texto más parecido
+D, I = index.search(np.array([query_vec]), k=2)
+print("Resultados similares:")
+for idx in I[0]:
+    print("-", sentences[idx])
 ```
 
-Para este caso, el principal valor de las simulaciones viene dado por la posibilidad de seleccionar metodos con un mayor o menor grado de incertidumbre; por otra parte, se podría también trabajar en sensibilizar el posible impacto de la predicción ya obtenida en base a los valores de relevantes de la simulación.
+Resultados similares:
 
-# Referencias
-
--   Vecillas Martin, D., Berruezo Fernández, C., & Gento Municio, A. M. (2025). Systematic Review of Discrete Event Simulation in Healthcare and Statistics Distributions. Applied Sciences, 15(4), 1861. [Enlace aquí](https://www.mdpi.com/2076-3417/15/4/1861#:~:text=53,CrossRef)
-
--   Heins, J., Schoenfelder, J., Heider, S., Heller, A. R., & Brunner, J. O. (2022). A scalable forecasting framework to predict COVID-19 hospital bed occupancy. INFORMS Journal on Applied Analytics, 52(6), 508-523. [Enlace aquí](https://opus.bibliothek.uni-augsburg.de/opus4/frontdoor/deliver/index/docId/92025/file/92025.pdf#:~:text=jens.brunner%40uni,care%20units%20and%20regular%20wards)
-
--   Harper, P. R., & Shahani, A. K. (2002). Modelling for the planning and management of bed capacities in hospitals. Journal of the Operational research Society, 53(1), 11-18.
+- The dog is barking.
+- I love my pet animal.
