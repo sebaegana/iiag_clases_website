@@ -1,0 +1,144 @@
+PROYECCCION SIMPLE
+
+// items vienen del Google Sheets node
+const rows = items;
+
+const PRICE_COL = "Close";   // columna de precio
+const DATE_COL  = "Date";    // columna de fecha en el histórico
+const N = 20;                // ventana de media móvil
+const H = 30;                // días a pronosticar
+
+// 1) Extraer precios válidos
+const closes = rows
+  .map(r => Number(r.json[PRICE_COL]))
+  .filter(x => !isNaN(x));
+
+if (closes.length < N + 1) {
+  throw new Error(`No hay suficientes datos para SMA de ${N} días`);
+}
+
+// 2) Último precio (último dato histórico)
+const lastPrice = closes[closes.length - 1];
+
+// 3) Calcular SMA de los últimos N días
+const lastN = closes.slice(-N);
+const smaValue = lastN.reduce((a, b) => a + b, 0) / N;
+
+// 4) Calcular retorno promedio sobre los últimos N días
+const returns = [];
+for (let i = 1; i < lastN.length; i++) {
+  const r = (lastN[i] - lastN[i - 1]) / lastN[i - 1];
+  returns.push(r);
+}
+const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+
+// 5) Tomar la ÚLTIMA FECHA del histórico como base
+const lastRow = rows[rows.length - 1];
+const rawDate = lastRow.json[DATE_COL];  // ej: "25/07/2024 16:00:00"
+
+// Lo forzamos a string y le sacamos la hora
+const s = String(rawDate).trim();        // "25/07/2024 16:00:00"
+const dateOnly = s.split(' ')[0];        // "25/07/2024"
+
+// Partimos por / (formato DD/MM/YYYY)
+const [dayStr, monthStr, yearStr] = dateOnly.split('/');
+
+const day   = Number(dayStr);
+const month = Number(monthStr) - 1;      // JS cuenta meses desde 0
+const year  = Number(yearStr);
+
+const baseDate = new Date(year, month, day);
+
+// Validar que la fecha sea válida
+if (isNaN(baseDate.getTime())) {
+  throw new Error(`No se pudo convertir la fecha '${rawDate}' a Date válido`);
+}
+
+// 6) Proyección iterativa H días hacia adelante
+let futurePrices = [];
+let currentPrice = lastPrice;
+
+for (let i = 1; i <= H; i++) {
+
+  // aplicar retorno promedio
+  currentPrice = currentPrice * (1 + avgReturn);
+
+  // fecha = última fecha histórica + i días
+  const d = new Date(baseDate);
+  d.setDate(d.getDate() + i);
+
+  futurePrices.push({
+    date: d.toISOString().slice(0, 10),  // YYYY-MM-DD
+    day_ahead: i,
+    forecast_price: currentPrice
+  });
+}
+
+// 7) Salida: un item por día futuro
+const today = new Date().toISOString().slice(0,10);
+
+return futurePrices.map(fp => ({
+  json: {
+    date_generated: today,           // día en que corriste el flujo
+    forecast_type: "sma_avg_return",
+    sma_N: N,
+    sma_value: smaValue,
+    avg_return_N: avgReturn,
+    last_price: lastPrice,
+    day_ahead: fp.day_ahead,         // 1, 2, 3, ..., 30
+    forecast_date: fp.date,          // fecha que va aumentando
+    forecast_price: fp.forecast_price
+  }
+}));
+
+----
+
+EXTRACCION COLUMNAS
+
+// items viene de Get rows in sheet
+const rows = items;
+
+// 1) Extraer precios
+const prices = rows
+  .map(r => Number(r.json["Close"]))
+  .filter(x => !isNaN(x));
+
+// 2) Definir horizonte (por ejemplo 20)
+const h = 20;
+
+return [{
+  json: { prices, h }
+}];
+
+-----
+
+CONSTRUCCIÓN FORECAST
+
+// Parsear el JSON que llega del nodo LLM
+const txt = $json.text;          // viene como string en res.text
+const res = JSON.parse(txt);     // ahora es un objeto JS
+
+const today = new Date();
+const out = [];
+
+for (let i = 0; i < res.h; i++) {
+  const d = new Date(today);
+  d.setDate(today.getDate() + i + 1);  // D+1, D+2, ..., D+h
+
+  out.push({
+    date_generated: today.toISOString().slice(0, 10),
+    day_ahead: i + 1,
+    forecast_date: d.toISOString().slice(0, 10),
+    forecast_price: res.forecast[i],
+    lower_95: res.lower_95[i],
+    upper_95: res.upper_95[i],
+    // 👇 aquí usamos best_order y best_aic
+    model_order: Array.isArray(res.best_order)
+      ? res.best_order.join(',')
+      : String(res.best_order),
+    aic: res.best_aic
+  });
+}
+
+// n8n espera un array de items { json: ... }
+return out.map(o => ({ json: o }));

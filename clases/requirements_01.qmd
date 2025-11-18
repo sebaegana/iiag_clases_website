@@ -2,7 +2,7 @@
 listing_title: "Requerimientos 01"
 title: |
   | \includegraphics[width=5cm]{Imagen1.jpg}
-  | ECO5008 Modelos predictivos
+  | Inversiones IA generativa
 subtitle: Requirements 01 - Requerimientos iniciales e instalación de n8n
 format: pdf
 editor: visual
@@ -115,7 +115,8 @@ Como aclaración, desde el paso 7 es algo que debemos hacer para poder conectarn
 4.  Ir a "API and services", luego "Library"
 5.  Buscamos "Google Sheets API" y la habilitamos
 6.  Vamos a "OAuth consent screen", "First steps", creamos un nombre para la app (n8n drive en mi caso), ingresamos nuestro correo, seteamos en externo y luego de nuevo nuestro correo.
-7.  Luego vamos a "OAuth client", en type ponemos Web app y seteamnos en la autorización para el URL desde n8n (http://localhost:5678/rest/oauth2-credential/callback) 8 Antes de validar la conexión vamos a "Test group" y añadimos nuestro correo a los usuarios.
+7.  Luego vamos a "OAuth client", en type ponemos Web app y seteamnos en la autorización para el URL desde n8n (http://localhost:5678/rest/oauth2-credential/callback)
+8.  Antes de validar la conexión vamos a "Test group" y añadimos nuestro correo a los usuarios.
 
 Por último, estos pasos no son necesario cuando tienes la versión web de n8n.
 

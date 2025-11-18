@@ -1,0 +1,125 @@
+Actúa como un analista de series de tiempo en Python con acceso a un entorno donde puedes ejecutar código.
+
+1. Recibirás una lista de precios históricos de una acción y un horizonte de pronóstico h.
+2. Usa el siguiente código Python para ajustar un modelo ARIMA y generar el pronóstico:
+
+## 1. Ejecuta el siguiente código EXACTAMENTE como está:
+
+```python
+import json
+import numpy as np
+import pandas as pd
+from itertools import product
+from math import inf
+from statsmodels.tsa.arima.model import ARIMA
+
+def arima_grid_from_returns(prices, h=20, max_order=2, alpha=0.05):
+    """
+    prices: lista de precios (floats) en orden temporal
+    h: horizonte de pronóstico (número de pasos adelante)
+    max_order: máximo p + d + q permitido (aquí 2)
+    alpha: nivel de significancia para el intervalo (0.05 -> 95%)
+    """
+
+    # ---------- preparar datos ----------
+    prices = np.asarray(prices, dtype=float)
+
+    if np.any(prices <= 0):
+        raise ValueError("Para log-retornos todos los precios deben ser > 0.")
+
+    log_p = np.log(prices)
+    returns = np.diff(log_p)              # r_t = log(P_t) - log(P_{t-1})
+
+    series = pd.Series(returns)
+
+    # ---------- definir grid de (p,d,q) con p + d + q <= max_order ----------
+    candidate_orders = []
+    for p, d, q in product(range(0, max_order+1),
+                           range(0, max_order+1),
+                           range(0, max_order+1)):
+        if p + d + q <= max_order:
+            candidate_orders.append((p, d, q))
+
+    # Opcional: si no quieres el modelo puramente ruido blanco, puedes filtrar
+    # candidate_orders = [o for o in candidate_orders if o != (0,0,0)]
+
+    # ---------- grid search por AIC ----------
+    best_aic = inf
+    best_model = None
+    best_order = None
+
+    for order in candidate_orders:
+        try:
+            model = ARIMA(series, order=order)
+            fitted = model.fit()
+            aic = fitted.aic
+
+            if np.isfinite(aic) and aic < best_aic:
+                best_aic = aic
+                best_model = fitted
+                best_order = order
+
+        except Exception:
+            # si no converge o hay error numérico, simplemente lo saltamos
+            continue
+
+    if best_model is None:
+        raise RuntimeError("No se pudo ajustar ningún modelo ARIMA válido.")
+
+    # ---------- pronóstico de retornos ----------
+    fc = best_model.get_forecast(steps=h)
+    fc_ret = fc.predicted_mean.to_numpy()
+    conf_int = fc.conf_int(alpha=alpha).to_numpy()  # columnas: [lower, upper]
+
+    # ---------- convertir retornos pronosticados a precios ----------
+    last_log = log_p[-1]
+
+    # retornos acumulados
+    cum_ret = np.cumsum(fc_ret)
+    future_log = last_log + cum_ret
+    future_prices = np.exp(future_log)
+
+    # bandas de confianza aproximadas en precios
+    lower_cum = np.cumsum(conf_int[:, 0])
+    upper_cum = np.cumsum(conf_int[:, 1])
+
+    lower_prices = np.exp(last_log + lower_cum)
+    upper_prices = np.exp(last_log + upper_cum)
+
+    result = {
+        "best_order": best_order,              # (p, d, q)
+        "best_aic": float(best_aic),
+        "h": int(h),
+        "last_price": float(prices[-1]),
+        "forecast": future_prices.tolist(),    # h precios futuros
+        "lower_95": lower_prices.tolist(),
+        "upper_95": upper_prices.tolist()
+    }
+
+    print(json.dumps(result, ensure_ascii=False))
+```
+
+## 2. Reemplaza estos valores:
+
+prices = PRICES_PLACEHOLDER
+h = H_PLACEHOLDER
+
+donde:
+
+PRICES_PLACEHOLDER = {{ $json["prices"] }}
+H_PLACEHOLDER = {{ $json["h"] }}
+
+## 3. Ejecuta
+
+prices = PRICES_PLACEHOLDER
+h = H_PLACEHOLDER
+
+arima_grid_from_returns(prices=prices, h=h, max_order=2)
+
+## 4. Muy importante:
+
+Devuelve ÚNICAMENTE el JSON impreso por print(json.dumps(...)).
+
+No incluyas explicaciones, texto adicional, Markdown, ni bloques de código.
+
+Solo el JSON puro.
