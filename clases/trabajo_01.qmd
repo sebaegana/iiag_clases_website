@@ -1,0 +1,87 @@
+---
+listing_title: "Trabajo - Flujo de automatización"
+title: |
+  | \includegraphics[width=5cm]{Imagen1.jpg}
+  | Inversiones IA generativa
+subtitle: Trabajo - Descripción de flujo de automatización
+format: pdf
+editor: visual
+author:   
+  - Sebastián Egaña Santibáñez [{{< fa brands inbox >}}](mailto:segana@fen.uchile.cl)
+  - Felipe Torres [{{< fa brands inbox >}}](mailto:ftorres@fen.uchile.cl)
+code-block-bg: true
+code-block-border-left: "#FF0000"
+---
+
+------------------------------------------------------------------------
+
+# Enlaces del profesor
+
+[{{< fa brands link >}}](https://segana.netlify.app) https://segana.netlify.app
+
+[{{< fa brands github >}}](https://github.com/sebaegana) https://github.com/sebaegana
+
+[{{< fa brands linkedin >}}](https://www.linkedin.com/in/sebastian-egana-santibanez/) https://www.linkedin.com/in/sebastian-egana-santibanez/
+
+------------------------------------------------------------------------
+
+```{r load_packages, message=FALSE, warning=FALSE, include=FALSE}
+library(fontawesome)
+```
+
+# Diseño de un flujo de automatización
+
+# Objetivo
+
+Diseñar un flujo de automatización que resuelva un problema concreto. Lo importante es que el flujo tenga sentido, esté bien explicado y que, si usas IA o agentes, sea sólo para tareas específicas donde realmente aporten valor.
+
+## Lo que debes entregar
+
+Un documento corto (2 páginas) con:
+
+  1. Descripción del problema
+
+    - ¿Qué tarea quieres automatizar?
+    - ¿Qué entrada recibe y qué salida produce?
+
+  2. Diagrama del flujo
+
+    - Usa la herramienta que quieras (draw.io, PowerPoint, Miro, etc.).
+    - Debe mostrar:
+
+      - Disparador (inicio)
+      - Pasos principales
+      - Condiciones (si las hay)
+      - Uso de IA o agentes (si corresponde)
+
+  3. Explicación de cada paso
+
+    - ¿Qué hace el paso?
+    - ¿Qué recibe y qué devuelve?
+    - Si usas IA/agentes: ¿qué tarea puntual cumple y por qué no sirve un paso tradicional?
+
+  4. Justificación general
+
+    - ¿Por qué tu flujo está bien diseñado?
+    - ¿Cómo ayuda a ahorrar tiempo, reducir errores o mejorar calidad?
+    - ¿Qué riesgos o errores podrían ocurrir y cómo los manejarías?
+
+## Criterios de evaluación
+
+1. Claridad del problema (20%)
+
+  - Se entiende qué tarea se automatiza y por qué.
+
+2. Coherencia del flujo (30%)
+  - El diagrama tiene lógica y los pasos están bien ordenados.
+
+3. Uso adecuado de IA/agentes (20%)
+  - Sólo se usan para tareas específicas y justificadas.
+
+4. Explicación de los pasos (20%)
+  - Se entiende qué hace cada paso y cómo fluye la información.
+
+5. Presentación (10%)
+
+  - Documento claro, ordenado y legible.
+
